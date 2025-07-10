@@ -1,0 +1,30 @@
+name: Daily Job Digest
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # Every day at 1am UTC
+  workflow_dispatch:
+
+jobs:
+  send_digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot
+        env:
+          OPENPIPE_API_KEY: ${{ secrets.OPENPIPE_API_KEY }}
+          MODEL_ID: ${{ secrets.MODEL_ID }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python job_digest_bot.py
