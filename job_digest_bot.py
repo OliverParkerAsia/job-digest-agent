@@ -4,18 +4,22 @@ from email.mime.text import MIMEText
 import openai
 
 def get_job_digest():
+    import openai
+
     client = openai.OpenAI(
         api_key=os.getenv("OPENPIPE_API_KEY"),
         base_url="https://openpipe.ai/api/v1"
     )
+
     model_id = os.getenv("MODEL_ID")
-    
+
     response = client.chat.completions.create(
         model=model_id,
         messages=[{"role": "user", "content": "List top 3 new media jobs in Hong Kong today."}]
     )
-    
+
     return response.choices[0].message.content
+
 
 def send_email(subject, body):
     msg = MIMEText(body)
