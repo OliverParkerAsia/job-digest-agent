@@ -7,9 +7,9 @@ def get_job_digest():
     import openai
 
     client = openai.OpenAI(
-        api_key=os.getenv("OPENPIPE_API_KEY"),
-        base_url="https://openpipe.ai/api/v1"
-    )
+    api_key=os.getenv("OPENPIPE_API_KEY"),
+    base_url="https://openpipe.ai/api/v1/"  # ✅ Critical
+)
 
     model_id = os.getenv("MODEL_ID")
 
