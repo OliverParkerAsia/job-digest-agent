@@ -5,12 +5,10 @@ import openai
 
 def get_job_digest():
     import openai
-
-    client = openai.OpenAI(
-    api_key=os.getenv("OPENPIPE_API_KEY"),
-    base_url="https://openpipe.ai/api/v1/"  # ✅ Critical
+client = openai.OpenAI(
+    api_key="your_openpipe_key",
+    base_url="https://openpipe.ai/api/v1/"  # ← this is critical
 )
-
     model_id = os.getenv("MODEL_ID")
 
     response = client.chat.completions.create(
