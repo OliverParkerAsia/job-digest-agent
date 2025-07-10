@@ -5,10 +5,13 @@ import openai
 
 def get_job_digest():
     import openai
-client = openai.OpenAI(
-    api_key="your_openpipe_key",
-    base_url="https://openpipe.ai/api/v1/"  # ← this is critical
-)
+    import os
+
+    client = openai.OpenAI(
+        api_key=os.getenv("OPENPIPE_API_KEY"),
+        base_url="https://openpipe.ai/api/v1/"  # This line is essential
+    )
+
     model_id = os.getenv("MODEL_ID")
 
     response = client.chat.completions.create(
@@ -17,7 +20,6 @@ client = openai.OpenAI(
     )
 
     return response.choices[0].message.content
-
 
 def send_email(subject, body):
     msg = MIMEText(body)
