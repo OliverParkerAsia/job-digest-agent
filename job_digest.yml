@@ -1,16 +1,31 @@
-def get_job_digest():
-    import openai
+name: Daily Job Digest
 
-    client = openai.OpenAI(
-        api_key=os.getenv("OPENPIPE_API_KEY"),
-        base_url="https://openpipe.ai/api/v1"  # <-- This line is essential
-    )
+on:
+  workflow_dispatch:  # Allows manual triggering
+  schedule:
+    - cron: '0 9 * * *'  # Runs daily at 09:00 UTC
 
-    model_id = os.getenv("MODEL_ID")
+jobs:
+  send_digest:
+    runs-on: ubuntu-latest
 
-    response = client.chat.completions.create(
-        model=model_id,
-        messages=[{"role": "user", "content": "List top 3 new media jobs in Hong Kong today."}]
-    )
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    return response.choices[0].message.content
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot
+        run: python job_digest_bot.py
+        env:
+          OPENPIPE_API_KEY: ${{ secrets.OPENPIPE_API_KEY }}
+          MODEL_ID: ${{ secrets.MODEL_ID }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
