@@ -6,17 +6,55 @@ from bs4 import BeautifulSoup
 from email.mime.text import MIMEText
 from openpipe import OpenAI
 
+import os
+import requests
+
+import json
+from datetime import datetime
+
+def log_completion(prompt, completion, log_path="logs.jsonl"):
+    entry = {
+        "prompt": prompt,
+        "completion": completion,
+        "timestamp": datetime.now().isoformat()
+    }
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def search_brave(query):
+    """Uses Brave Search API to get the first result URL for a given query."""
+    url = "https://api.search.brave.com/res/v1/web/search"
+    headers = {
+        "Accept": "application/json",
+        "X-Subscription-Token": os.getenv("BRAVE_API_KEY"),
+    }
+    params = {
+        "q": query,
+        "count": 1,
+        "search_lang": "en",
+        "country": "HK",
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        data = response.json()
+        results = data.get("web", {}).get("results", [])
+        if results:
+            return results[0]["url"]
+    except Exception as e:
+        print(f"Brave search failed for '{query}': {e}")
+    return None
+
+
 def get_job_digest():
-    """Original version — returns plain text."""
     client = OpenAI(
         openpipe={"api_key": os.getenv("OPENPIPE_API_KEY")}
     )
 
     model_id = os.getenv("MODEL_ID")
-    response = client.chat.completions.create(
-        model=model_id,
-        messages=[
-            {"role": "user", "content": """You are a job curator specializing in experimental media, digital culture, and XR positions. List 5–10 relevant job opportunities currently open in Hong Kong.
+    prompt = """You are a job curator specializing in experimental media, digital culture, and XR positions. List 5–10 relevant job opportunities currently open in Hong Kong.
 
 For each job, return:
 - Title
@@ -25,49 +63,41 @@ For each job, return:
 
 Format each line like this:
 [1] Title at Institution — Short Description
-Return each job on a new line."""}
-        ]
+Return each job on a new line."""
+
+    response = client.chat.completions.create(
+        model=model_id,
+        messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.choices[0].message.content
+    completion = response.choices[0].message.content
+    log_completion(prompt, completion)
+    return completion
 
-def search_duckduckgo(query):
-    """Returns the first result link from DuckDuckGo HTML version."""
-    url = "https://html.duckduckgo.com/html/"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    data = {"q": query}
-    response = requests.post(url, headers=headers, data=data)
-    soup = BeautifulSoup(response.text, "html.parser")
-    results = soup.find_all("a", class_="result__a")
 
-    if results:
-        return results[0]["href"]
-    return None
 
 def enrich_with_links(job_list_raw):
-    import html  # just in case
-
     lines = job_list_raw.strip().split("\n")
     html_list = []
 
     for line in lines:
         if "]" not in line:
-            continue  # skip broken lines
+            continue
 
         try:
             job_text = line.split("]", 1)[1].strip()
             search_query = job_text + " site:.hk"
-            url = search_duckduckgo(search_query)
 
+            url = search_brave(search_query)
             html_list.append(
-                f'<li style="margin-bottom: 12px;"><a href="{html.escape(url or "#")}" style="text-decoration: none; color: #4405dd;">{html.escape(job_text)}</a></li>'
+                f'<li style="margin-bottom: 12px;"><a href="{url or "#"}" style="text-decoration: none; color: #4405dd;">{job_text}</a></li>'
             )
-            time.sleep(3.0)
 
-        except Exception:
-            html_list.append(f"<li>{html.escape(line)} (error)</li>")
+        except Exception as e:
+            html_list.append(f"<li>{job_text} (error)</li>")
 
     return f"<ul style='padding-left: 20px; margin-top: 0;'>{''.join(html_list)}</ul>"
+
 
 def get_job_digest_enriched():
     raw = get_job_digest()
