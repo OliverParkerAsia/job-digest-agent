@@ -62,7 +62,7 @@ def enrich_with_links(job_list_raw):
             html_list.append(
                 f'<li style="margin-bottom: 12px;"><a href="{html.escape(url or "#")}" style="text-decoration: none; color: #4405dd;">{html.escape(job_text)}</a></li>'
             )
-            time.sleep(1.5)
+            time.sleep(3.0)
 
         except Exception:
             html_list.append(f"<li>{html.escape(line)} (error)</li>")
