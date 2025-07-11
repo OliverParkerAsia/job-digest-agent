@@ -53,8 +53,9 @@ def enrich_with_links(job_list_raw):
             if url:
                 html_list.append(f'<li><a href="{url}">{job_text}</a></li>')
             else:
-                html_list.append(f"<li>{job_text}</li>")  # fallback
-
+                html_list.append(
+                    f'<li style="margin-bottom: 10px; font-size: 15px;"><a href="{url}" style="text-decoration: none; color: #4405dd;">{job_text}</a></li>'
+                )
             time.sleep(1.5)  # avoid getting blocked
 
         except Exception as e:
