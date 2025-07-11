@@ -16,7 +16,16 @@ def get_job_digest():
     response = client.chat.completions.create(
         model=model_id,
         messages=[
-            {"role": "user", "content": "List top 3 new media jobs in Hong Kong today."}
+            {"role": "user", "content": """You are a job curator specializing in experimental media, digital culture, and XR positions. List 5–10 relevant job opportunities currently open in Hong Kong.
+
+For each job, return:
+- Title
+- Institution
+- One-line description (optional)
+
+Format each line like this:
+[1] Title at Institution — Short Description
+Return each job on a new line."""}
         ]
     )
 
@@ -36,26 +45,27 @@ def search_duckduckgo(query):
     return None
 
 def enrich_with_links(job_list_raw):
+    import html  # just in case
+
     lines = job_list_raw.strip().split("\n")
     html_list = []
 
     for line in lines:
+        if "]" not in line:
+            continue  # skip broken lines
+
         try:
             job_text = line.split("]", 1)[1].strip()
             search_query = job_text + " site:.hk"
             url = search_duckduckgo(search_query)
 
-            if url:
-                html_list.append(
-                    f'<li style="margin-bottom: 12px;"><a href="{url}" style="text-decoration: none; color: #4405dd;">{job_text}</a></li>'
-                )
-            else:
-                html_list.append(f"<li>{job_text}</li>")
-
+            html_list.append(
+                f'<li style="margin-bottom: 12px;"><a href="{html.escape(url or "#")}" style="text-decoration: none; color: #4405dd;">{html.escape(job_text)}</a></li>'
+            )
             time.sleep(1.5)
 
         except Exception:
-            html_list.append(f"<li>{line} (error)</li>")
+            html_list.append(f"<li>{html.escape(line)} (error)</li>")
 
     return f"<ul style='padding-left: 20px; margin-top: 0;'>{''.join(html_list)}</ul>"
 
