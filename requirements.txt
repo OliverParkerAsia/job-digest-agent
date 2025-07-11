@@ -1,3 +1,5 @@
 openpipe
+requests
+beautifulsoup4
 
 
