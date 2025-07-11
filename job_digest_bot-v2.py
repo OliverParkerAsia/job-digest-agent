@@ -27,7 +27,6 @@ def search_duckduckgo(query):
     url = "https://html.duckduckgo.com/html/"
     headers = {"User-Agent": "Mozilla/5.0"}
     data = {"q": query}
-
     response = requests.post(url, headers=headers, data=data)
     soup = BeautifulSoup(response.text, "html.parser")
     results = soup.find_all("a", class_="result__a")
@@ -37,10 +36,6 @@ def search_duckduckgo(query):
     return None
 
 def enrich_with_links(job_list_raw):
-    """
-    Takes model output string and returns an HTML <ul> with clickable job links.
-    Assumes format: [1] Title at Institution
-    """
     lines = job_list_raw.strip().split("\n")
     html_list = []
 
@@ -48,20 +43,21 @@ def enrich_with_links(job_list_raw):
         try:
             job_text = line.split("]", 1)[1].strip()
             search_query = job_text + " site:.hk"
-
             url = search_duckduckgo(search_query)
-            if url:
-                html_list.append(f'<li><a href="{url}">{job_text}</a></li>')
-            else:
-                html_list.append(
-                    f'<li style="margin-bottom: 10px; font-size: 15px;"><a href="{url}" style="text-decoration: none; color: #4405dd;">{job_text}</a></li>'
-                )
-            time.sleep(1.5)  # avoid getting blocked
 
-        except Exception as e:
+            if url:
+                html_list.append(
+                    f'<li style="margin-bottom: 12px;"><a href="{url}" style="text-decoration: none; color: #4405dd;">{job_text}</a></li>'
+                )
+            else:
+                html_list.append(f"<li>{job_text}</li>")
+
+            time.sleep(1.5)
+
+        except Exception:
             html_list.append(f"<li>{line} (error)</li>")
 
-    return "<ul>" + "\n".join(html_list) + "</ul>"
+    return f"<ul style='padding-left: 20px; margin-top: 0;'>{''.join(html_list)}</ul>"
 
 def get_job_digest_enriched():
     raw = get_job_digest()
