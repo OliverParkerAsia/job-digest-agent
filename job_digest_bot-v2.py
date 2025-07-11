@@ -265,8 +265,11 @@ def send_email(subject: str, body: str, html: bool = False):
 if __name__ == "__main__":
     print("Generating job digest email...")
     digest_html = get_job_digest_enriched_html()
+    
     with open("job_digest_email.html", "w", encoding="utf-8") as f:
         f.write(digest_html)
+    
     print("HTML email content saved to job_digest_email.html")
-
-    print("Email sending functionality is commented out. Uncomment `send_email` to send.")
+    
+    # ✅ Actually send the email
+    send_email("🗞️ Your Daily Job Digest (with links)", digest_html, html=True)
