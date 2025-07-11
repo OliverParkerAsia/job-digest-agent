@@ -67,38 +67,21 @@ Return each job on a new line."""
     log_completion(prompt, completion)
     return completion
 
-def enrich_with_links(job_list_raw):
-    lines = job_list_raw.strip().split("\n")
-    html_list = []
+def enrich_with_links(job_lines):
+    job_list = []
+    for line in job_lines.strip().split("\n"):
+        job_list.append({
+            "title": line.strip(),
+            "description": "",
+            "link": ""
+        })
 
-    for line in lines:
-        if "]" not in line:
-            continue
-
-        try:
-            job_text = line.split("]", 1)[1].strip()
-            search_query = job_text + " site:.hk"
-            url = search_brave(search_query)
-            html_list.append(
-                f'<li style="margin-bottom: 12px;"><a href="{url or "#"}" style="text-decoration: none; color: #4405dd;">{job_text}</a></li>'
-            )
-        except Exception:
-            html_list.append(f"<li>{job_text} (error)</li>")
-
-    return f"<ul style='padding-left: 20px; margin-top: 0;'>{''.join(html_list)}</ul>"
-
-def enrich_with_links(job_list):
     html = '<ul style="padding-left: 20px;">'
-
-def enrich_with_links(job_list):
-    html = '<ul style="padding-left: 20px;">'
-
     for job in job_list:
         title = job.get("title", "Untitled Position")
         description = job.get("description", "")
         link = job.get("link")
 
-        # If no real link is provided, create a Brave search URL
         if not link:
             query = f"{title} {description} site:.hk"
             link = f"https://search.brave.com/search?q={query.replace(' ', '+')}"
@@ -109,14 +92,11 @@ def enrich_with_links(job_list):
             f'<span style="font-size: 14px; color: #444;">{description}</span>'
             f'</li>'
         )
-
     html += "</ul>"
     return html
 
-from datetime import datetime
-
 def get_job_digest_enriched():
-    raw = get_job_digest_list()
+    raw = get_job_digest()
     html_list = enrich_with_links(raw)
 
     return f"""
@@ -132,9 +112,6 @@ def get_job_digest_enriched():
         </body>
     </html>
     """
-
-
-
 
 def send_email(subject, body, html=False):
     msg = MIMEText(body, "html" if html else "plain")
