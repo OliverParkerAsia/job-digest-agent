@@ -116,7 +116,7 @@ def enrich_with_links(job_list):
 from datetime import datetime
 
 def get_job_digest_enriched():
-    raw = get_job_digest()
+    raw = get_job_digest_list()
     html_list = enrich_with_links(raw)
 
     return f"""
