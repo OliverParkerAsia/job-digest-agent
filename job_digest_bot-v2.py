@@ -24,7 +24,7 @@ def search_brave(query):
     }
     params = {
         "q": query,
-        "count": 1,
+        "count": 3,
         "search_lang": "en",
         "country": "HK",
     }
@@ -34,11 +34,12 @@ def search_brave(query):
         response.raise_for_status()
         data = response.json()
         results = data.get("web", {}).get("results", [])
-        if results:
-            return results[0]["url"]
+        for result in results:
+            if "url" in result and result["url"].startswith("http"):
+                return result["url"]
     except Exception as e:
         print(f"Brave search failed for '{query}': {e}")
-    return None
+    return "https://www.google.com/search?q=" + requests.utils.quote(query)
 
 def get_job_digest():
     client = OpenAI(
