@@ -111,12 +111,6 @@ def search_brave(query: str) -> str:
     """
     Performs a Brave search for a given query and returns the first relevant URL.
     Falls back to a Google search URL if Brave search fails or no URL is found.
-
-    Args:
-        query: The search query string.
-
-    Returns:
-        A URL string.
     """
     url = "https://api.search.brave.com/res/v1/web/search"
     headers = {
@@ -125,25 +119,33 @@ def search_brave(query: str) -> str:
     }
     params = {
         "q": query,
-        "count": 1,  # Only need one result for the link
+        "count": 1,
         "search_lang": "en",
-        "country": "HK", # Focusing on Hong Kong as per the prompt
+        "country": "HK",
     }
 
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=5) # Added timeout
-        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
+        print(f"[Brave] Searching: {query}")
+        response = requests.get(url, headers=headers, params=params, timeout=5)
+        response.raise_for_status()
         data = response.json()
         results = data.get("web", {}).get("results", [])
-        if results and "url" in results[0] and results[0]["url"].startswith("http"):
-            return results[0]["url"]
-    except requests.exceptions.RequestException as e:
-        print(f"Brave search failed for '{query}': {e}")
-    except json.JSONDecodeError:
-        print(f"Brave search returned invalid JSON for '{query}'.")
 
-    # Fallback to Google search if Brave fails or no suitable URL is found
-    print(f"Falling back to Google search for: {query}")
+        print(f"[Brave] Raw results: {json.dumps(results, indent=2)}")
+
+        if results and "url" in results[0] and results[0]["url"].startswith("http"):
+            found_url = results[0]["url"]
+            print(f"[Brave] Found URL: {found_url}")
+            return found_url
+        else:
+            print(f"[Brave] No usable results found.")
+    except requests.exceptions.RequestException as e:
+        print(f"[Brave] Request error: {e}")
+    except json.JSONDecodeError as e:
+        print(f"[Brave] JSON decode error: {e}")
+
+    # Fallback
+    print(f"[Fallback] Google search link used for: {query}")
     return "https://www.google.com/search?q=" + requests.utils.quote(query)
 
 # --------------------------------------------------------------------------------
